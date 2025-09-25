@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Challenge : Beat kewal</title>
+  <style>
+    body {
+      margin: 0;
+      background: skyblue;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      background: skyblue;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let bird = { x: 60, y: canvas.height / 2, size: 20, vel: 0 };
+    let gravity = 0.5;
+    let jump = -8;
+
+    let pipes = [];
+    let pipeGap = 150;
+    let pipeWidth = 60;
+    let pipeVel = 2.5;
+
+    let score = 0;
+    let gameOver = false;
+
+    function createPipe() {
+      let topHeight = Math.random() * (canvas.height - pipeGap - 200) + 50;
+      let bottomY = topHeight + pipeGap;
+      pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: bottomY,
+      });
+    }
+
+    function resetGame() {
+      bird.y = canvas.height / 2;
+      bird.vel = 0;
+      pipes = [];
+      score = 0;
+      pipeVel = 2.5;
+      gameOver = false;
+      createPipe();
+      animate();
+    }
+
+    function drawBird() {
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = "green";
+      for (let p of pipes) {
+        ctx.fillRect(p.x, 0, pipeWidth, p.top);
+        ctx.fillRect(p.x, p.bottom, pipeWidth, canvas.height - p.bottom);
+      }
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      bird.vel += gravity;
+      bird.y += bird.vel;
+
+      // Move pipes
+      for (let p of pipes) {
+        p.x -= pipeVel;
+      }
+
+      // Add new pipes
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width / 2) {
+        createPipe();
+      }
+
+      // Remove off-screen pipes
+      if (pipes[0].x + pipeWidth < 0) {
+        pipes.shift();
+        score++;
+      }
+
+      // Collision detection
+      for (let p of pipes) {
+        if (
+          bird.x + bird.size > p.x &&
+          bird.x - bird.size < p.x + pipeWidth &&
+          (bird.y - bird.size < p.top || bird.y + bird.size > p.bottom)
+        ) {
+          gameOver = true;
+        }
+      }
+
+      if (bird.y + bird.size > canvas.height || bird.y - bird.size < 0) {
+        gameOver = true;
+      }
+
+      // Increase speed slowly
+      pipeVel += 0.0003;
+    }
+
+    function drawText() {
+      ctx.fillStyle = "white";
+      ctx.font = "bold 20px Arial";
+      ctx.fillText("Challenge : Beat score of Mr.Kewal (10)", 20, 40);
+
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 20, 80);
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      update();
+      drawBird();
+      drawPipes();
+      drawText();
+
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "bold 40px Arial";
+        ctx.fillText("Game Over!", 100, canvas.height / 2);
+        ctx.font = "20px Arial";
+        ctx.fillText("Click to Restart", 120, canvas.height / 2 + 40);
+        return;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Controls
+    document.addEventListener("keydown", () => { bird.vel = jump; });
+    document.addEventListener("mousedown", () => {
+      if (gameOver) {
+        resetGame();
+      } else {
+        bird.vel = jump;
+      }
+    });
+    document.addEventListener("touchstart", () => {
+      if (gameOver) {
+        resetGame();
+      } else {
+        bird.vel = jump;
+      }
+    });
+
+    // Start game
+    resetGame();
+  </script>
+</body>
+</html>
